@@ -1,4 +1,5 @@
 from rest_framework.routers import DefaultRouter
+from django.urls import path, include
 from .views import (
     UserViewSet, 
     ProductViewSet, 
@@ -25,3 +26,7 @@ router.register('payments', PaymentViewSet)
 router.register('reviews', ReviewViewSet)
 router.register('wishlists', WishlistViewSet)
 router.register('wishlist-items', WishlistItemViewSet)
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
