@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django.core.cache import cache
 from .models import (
     User, 
     Category, 
@@ -41,6 +42,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+    def list(self, request, *args, **kwargs):
+        cache_key = 'products_list'
+        cached_products = cache.get(cache_key)
+        
+        if cached_products:
+            return Response(cached_products)
+        
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, timeout=300)
+        return response
+
+    def retrieve(self, request, *args, **kwargs):
+        cache_key = f'product_{kwargs["pk"]}'
+        cached_product = cache.get(cache_key)
+        
+        if cached_product:
+            return Response(cached_product)
+        
+        response = super().retrieve(request, *args, **kwargs)
+        cache.set(cache_key, response.data, timeout=300)
+        return response
 
 
 class OrderViewSet(viewsets.ModelViewSet):
