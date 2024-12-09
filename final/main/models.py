@@ -7,13 +7,18 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["created_at"]),
+        ]
+
 
 class Category(models.Model):
     name = models.CharField(max_length=20)
     parent_id = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name="subcategories")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
 
     class Meta:
         indexes = [
@@ -34,6 +39,13 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["category", "price"]),
+        ]
 
     def __str__(self):
         return self.name
@@ -53,6 +65,14 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["order_status"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["user", "order_status"]),
+        ]
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
@@ -62,11 +82,24 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["order"]),
+            models.Index(fields=["product"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["order", "product"]),
+        ]
+
 
 class ShoppingCart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shopping_cart')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+        ]
 
 
 class CartItem(models.Model):
@@ -74,6 +107,13 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items')
     quantity = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["cart"]),
+            models.Index(fields=["product"]),
+            models.Index(fields=["cart", "product"])
+        ]
 
 
 class Payment(models.Model):
@@ -91,6 +131,14 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["order"]),
+            models.Index(fields=["payment_method"]),
+            models.Index(fields=["amount"]),
+            models.Index(fields=["order", "payment_method"])
+        ]
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
@@ -99,14 +147,34 @@ class Review(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["user"]),
+            models.Index(fields=["rating"]),
+            models.Index(fields=["product", "rating"]),
+        ]
+
 
 class Wishlist(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wishlist')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+        ]
+
 
 class WishlistItem(models.Model):
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='wishlist_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist_items')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["wishlist"]),
+            models.Index(fields=["product"]),
+            models.Index(fields=["wishlist", "product"]),
+        ]
