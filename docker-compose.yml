@@ -5,7 +5,7 @@ services:
     build:
       context: ./final
       dockerfile: dockerfile
-    container_name: django_app_1
+    container_name: django1
     ports:
       - "8001:8001"
     environment:
@@ -16,12 +16,14 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - monitoring
 
   django2:
     build:
       context: ./final
       dockerfile: dockerfile
-    container_name: django_app_2
+    container_name: django2
     ports:
       - "8002:8002"
     environment:
@@ -32,12 +34,14 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - monitoring
 
   django3:
     build:
       context: ./final
       dockerfile: dockerfile
-    container_name: django_app_3
+    container_name: django3
     ports:
       - "8003:8003"
     environment:
@@ -48,6 +52,8 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - monitoring
 
   nginx:
     build:
@@ -66,6 +72,8 @@ services:
       - django1
       - django2
       - django3
+    networks:
+      - monitoring
   
   db:
     image: postgres:13
@@ -86,7 +94,35 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+  
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+  
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring
+    
 
 volumes:
   db_data:
   redis_data:
+
+networks:
+  monitoring:
+    driver: bridge
