@@ -90,6 +90,9 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get("DATABASE_URL")
     ),
+    'replica': dj_database_url.config(
+        default=os.environ.get("DATABASE_REPLICA_URL")
+    )
 }
 
 
@@ -188,4 +191,15 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'myapp.tasks.process_payment',
         'schedule': 300.0,
     },
+}
+
+
+BACKUP_STORAGE = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {
+            'location': '/process/backups/',
+            'encrypt': True,
+        }
+    }
 }
