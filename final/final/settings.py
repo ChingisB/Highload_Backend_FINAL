@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import dj_database_url
 import os
+import structlog
+from structlog.stdlib import LoggerFactory
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -140,3 +143,35 @@ CACHES = {
 }
 
 APPEND_SLASH = True
+
+structlog.configure(
+    processors=[
+        structlog.processors.KeyValueRenderer(key_order=['event', 'logger', 'level', 'timestamp']),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.format_exc_info,
+        structlog.processors.StackInfoRenderer(),
+    ],
+    context_class=dict,
+    logger_factory=LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
