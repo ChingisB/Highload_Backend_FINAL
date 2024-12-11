@@ -11,12 +11,13 @@ services:
     environment:
       - DJANGO_DEBUG=1
       - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydb
-      - DATABASE_REPLICA_URL=postgres://myuser:mypassword@db:5433/mydb
+      - DATABASE_REPLICA_URL=postgres://replicauser:replicapassword@db:5433/mydb
       - REDIS_URL=redis://localhost:6379/1  
       - REDIS_TASKS_URL=redis://localhost:6379/0
     command: gunicorn final.wsgi:application --bind 0.0.0.0:8001
     depends_on:
       - db
+      - db_replica
       - redis
     networks:
       - monitoring
@@ -31,12 +32,13 @@ services:
     environment:
       - DJANGO_DEBUG=1
       - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydb
-      - DATABASE_REPLICA_URL=postgres://myuser:mypassword@db:5433/mydb
+      - DATABASE_REPLICA_URL=postgres://replicauser:replicapassword@db:5433/mydb
       - REDIS_URL=redis://localhost:6379/1  
       - REDIS_TASKS_URL=redis://localhost:6379/0
     command: gunicorn final.wsgi:application --bind 0.0.0.0:8002
     depends_on:
       - db
+      - db_replica
       - redis
     networks:
       - monitoring
@@ -51,11 +53,13 @@ services:
     environment:
       - DJANGO_DEBUG=1
       - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydb  
+      - DATABASE_REPLICA_URL=postgres://replicauser:replicapassword@db:5433/mydb
       - REDIS_URL=redis://localhost:6379/1  
       - REDIS_TASKS_URL=redis://localhost:6379/0
     command: gunicorn final.wsgi:application --bind 0.0.0.0:8003
     depends_on:
       - db
+      - db_replica
       - redis
     networks:
       - monitoring
@@ -83,12 +87,15 @@ services:
   db:
     image: postgres:13
     container_name: db
+    command: ["postgres", "-c", "config_file=/etc/postgresql.conf", "-c", "hba_file=/etc/pg_hba.conf"]
     environment:
       POSTGRES_DB: mydb
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./db_configuration/postgresql.conf:/etc/postgresql.conf
+      - ./db_configuration/pg_hba.conf:/etc/pg_hba.conf
     ports:
       - "5432:5432"
     networks:
@@ -99,8 +106,8 @@ services:
     container_name: db_replica
     environment:
       POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: replicauser
+      POSTGRES_PASSWORD: replicapassword
     volumes:
       - replica_db_data:/var/lib/postgresql/data
     depends_on:
@@ -109,6 +116,12 @@ services:
       - "5433:5432"
     networks:
       - monitoring
+    command: >
+      sh -c "rm -rf /var/lib/postgresql/data/* &&
+            chmod 700 /var/lib/postgresql/data &&
+            until pg_isready -h db -p 5432; do sleep 1; done;
+            su postgres -c 'PGPASSWORD=mypassword pg_basebackup -h db -D /var/lib/postgresql/data -U myuser -vP --wal-method=stream' &&
+            su postgres -c postgres"
   
   redis:
     image: redis:alpine
@@ -144,6 +157,7 @@ services:
 
 volumes:
   db_data:
+    driver: local
   redis_data:
   replica_db_data:
 

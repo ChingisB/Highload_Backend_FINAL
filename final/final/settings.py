@@ -203,3 +203,6 @@ BACKUP_STORAGE = {
         }
     }
 }
+
+
+DATABASE_ROUTERS = ['routers.database_router.MasterSlaveRouter']
