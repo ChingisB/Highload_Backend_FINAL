@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_prometheus',
-    'main'
+    'main',
+    'celery',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -175,3 +177,14 @@ LOGGING = {
     },
 }
 
+CELERY_BROKER_URL = os.environ.get("REDIS_TASKS_URL")
+CELERY_BEAT_SCHEDULE = {
+    'send-order-confirmation-emails': {
+        'task': 'myapp.tasks.send_order_confirmation_email',
+        'schedule': 60.0,
+    },
+    'process-payments': {
+        'task': 'myapp.tasks.process_payment',
+        'schedule': 300.0,
+    },
+}

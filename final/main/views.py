@@ -1,6 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.core.cache import cache
+from django.http import JsonResponse
+from .tasks import send_order_confirmation_email, process_payment
 from .models import (
     User, 
     Category, 
@@ -104,3 +106,13 @@ class WishlistViewSet(viewsets.ModelViewSet):
 class WishlistItemViewSet(viewsets.ModelViewSet):
     queryset = WishlistItem.objects.all()
     serializer_class = WishlistItemSerializer
+
+
+def create_order(request):
+    new_order = Order.objects.create(user=request.user, total_amount=100.0)
+    
+
+    send_order_confirmation_email.delay(new_order.id)
+    process_payment.delay(new_order.id)
+    
+    return JsonResponse({'message': 'Order created and tasks are being processed.'})
