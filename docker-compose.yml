@@ -15,6 +15,7 @@ services:
       - REDIS_URL=redis://redis:6379/1  
       - REDIS_TASKS_URL=redis://redis:6379/0
     command: gunicorn final.wsgi:application --bind 0.0.0.0:8001
+    entrypoint: ["sh", "-c", "python3 manage.py migrate && gunicorn final.wsgi:application --bind 0.0.0.0:8001"]
     depends_on:
       - db
       - db_replica
@@ -40,6 +41,7 @@ services:
       - db
       - db_replica
       - redis
+      - django1
     networks:
       - monitoring
 
@@ -61,6 +63,7 @@ services:
       - db
       - db_replica
       - redis
+      - django1
     networks:
       - monitoring
 

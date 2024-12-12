@@ -18,6 +18,7 @@
 - Large payload sizes are likely causing high network utilization.
 
 ### Endpoint: `/api/orders/`
+![Alt text](./orders_performance.png)
 - **Number of Samples:** 141,814 requests
 - **Average Response Time:** 999 ms
 - **Error Rate:** 31.71%
